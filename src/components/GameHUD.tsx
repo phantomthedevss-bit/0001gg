@@ -126,21 +126,37 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </div>
         )}
 
-        {/* Top-Right: Wave & Score Readouts */}
-        <div className="space-y-2 pointer-events-auto text-right">
-          <div className="bg-slate-950/80 border border-slate-800 p-3 inline-block min-w-44">
-            <div className="text-[10px] text-cyan-400 font-code tracking-widest uppercase mb-0.5">
-              SECTOR WAVE // 0{stats.wave}
+        {/* Top-Right: Wave, Score & Quick Controls */}
+        <div className="space-y-1.5 pointer-events-auto text-right">
+          <div className="bg-slate-950/80 border border-slate-800 p-2 md:p-3 inline-block min-w-32 md:min-w-44">
+            <div className="flex items-center justify-between gap-3 text-[9px] md:text-[10px] text-cyan-400 font-code tracking-widest uppercase mb-0.5">
+              <span>WAVE 0{stats.wave}</span>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={handleToggleMute}
+                  className="p-1 hover:text-white transition-colors"
+                  title="Toggle Audio [M]"
+                >
+                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+                <button
+                  onClick={onPause}
+                  className="p-1 hover:text-white transition-colors"
+                  title="Pause Game [Esc]"
+                >
+                  <Pause size={14} />
+                </button>
+              </div>
             </div>
-            <div className="text-2xl font-bold font-code text-white tabular-nums tracking-wider">
+            <div className="text-lg md:text-2xl font-bold font-code text-white tabular-nums tracking-wider">
               {stats.score.toLocaleString()}
             </div>
 
             {/* Combo Streak */}
             {stats.combo > 1 && (
-              <div className="mt-1 pt-1 border-t border-slate-800 flex items-center justify-end space-x-1.5 text-xs font-code font-bold text-amber-400">
+              <div className="mt-1 pt-1 border-t border-slate-800 flex items-center justify-end space-x-1.5 text-[10px] md:text-xs font-code font-bold text-amber-400">
                 <span>COMBO</span>
-                <span className="px-1.5 py-0.5 bg-amber-500/20 border border-amber-500/50 rounded tabular-nums">
+                <span className="px-1 py-0.2 bg-amber-500/20 border border-amber-500/50 rounded tabular-nums">
                   {stats.combo}x
                 </span>
               </div>
@@ -168,8 +184,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         ))}
       </div>
 
-      {/* Bottom Perimeter Cluster: Active Weapon, Nova Meter & Controls */}
-      <div className="flex items-end justify-between w-full">
+      {/* Bottom Perimeter Cluster (Desktop View / Centered for Mobile Clearance) */}
+      <div className="hidden md:flex items-end justify-between w-full">
         {/* Weapon Readout */}
         <div className="bg-slate-950/80 border border-slate-800 px-3 py-2 pointer-events-auto flex items-center space-x-3">
           <div className="p-2 bg-cyan-950/60 border border-cyan-500/40 text-cyan-400">

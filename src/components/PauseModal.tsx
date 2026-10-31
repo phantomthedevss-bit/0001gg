@@ -33,8 +33,8 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/85 select-none">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700 p-6 space-y-6 shadow-2xl">
+    <div className="absolute inset-0 z-30 flex items-center justify-center p-3 md:p-4 bg-slate-950/85 select-none">
+      <div className="w-full max-w-md max-h-[94vh] overflow-y-auto bg-slate-900 border border-slate-700 p-5 md:p-6 space-y-4 md:space-y-6 shadow-2xl">
         {/* Header */}
         <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
           <div>

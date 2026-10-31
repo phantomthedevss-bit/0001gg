@@ -11,6 +11,8 @@ import { TitleScreen } from './components/TitleScreen';
 import { GameHUD } from './components/GameHUD';
 import { PauseModal } from './components/PauseModal';
 import { GameOverModal } from './components/GameOverModal';
+import { MobileControls } from './components/MobileControls';
+import { sound } from './audio/soundEngine';
 import {
   ChassisSkinDef,
   DamageNumber,
@@ -24,6 +26,11 @@ export default function App() {
   const mountRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
   const rendererRef = useRef<ThreeRenderer | null>(null);
+
+  // Detect touch device
+  const [isTouchDevice, setIsTouchDevice] = useState(() => {
+    return typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  });
 
   // High-level UI state
   const [gameState, setGameState] = useState<GameState>('TITLE');
@@ -149,11 +156,19 @@ export default function App() {
     };
     window.addEventListener('resize', handleResize);
 
-    // 5. Cleanup
+    // 5. Touch wakeup for mobile browsers
+    const onTouchWake = () => {
+      setIsTouchDevice(true);
+      sound.ensureContext();
+    };
+    window.addEventListener('touchstart', onTouchWake, { passive: true });
+
+    // 6. Cleanup
     return () => {
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('touchstart', onTouchWake);
       engine.dispose();
       renderer.dispose();
     };
@@ -228,13 +243,25 @@ export default function App() {
 
       {/* 3. In-Game Low-Occlusion HUD */}
       {gameState === 'PLAYING' && (
-        <GameHUD
-          stats={playerStats}
-          weapon={currentWeapon}
-          onPause={handlePause}
-          bossInstance={bossInstance}
-          damagePopups={damagePopups}
-        />
+        <>
+          <GameHUD
+            stats={playerStats}
+            weapon={currentWeapon}
+            onPause={handlePause}
+            bossInstance={bossInstance}
+            damagePopups={damagePopups}
+          />
+          {isTouchDevice && (
+            <MobileControls
+              onMove={(x, z) => engineRef.current?.setTouchMove(x, z)}
+              onAim={(angle) => engineRef.current?.setTouchAim(angle)}
+              onShooting={(active) => engineRef.current?.setTouchShooting(active)}
+              onDash={() => engineRef.current?.triggerDashAction()}
+              onNova={() => engineRef.current?.triggerNovaAction()}
+              stats={playerStats}
+            />
+          )}
+        </>
       )}
 
       {/* 4. Pause Modal */}

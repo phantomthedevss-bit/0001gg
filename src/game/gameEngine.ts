@@ -242,6 +242,12 @@ export class GameEngine {
   private shootTimer: number = 0;
   private alternatingBarrel: boolean = false;
 
+  // Mobile Touch Inputs
+  public touchMoveX: number = 0;
+  public touchMoveZ: number = 0;
+  public isTouchShooting: boolean = false;
+  public touchAimAngle: number | null = null;
+
   // Wave Director
   private waveEnemiesRemaining: number = 0;
   private waveSpawnTimer: number = 0;
@@ -354,6 +360,32 @@ export class GameEngine {
     this.currentSkin = skin;
     this.renderer.setSkin(skin);
     sound.playUiClick();
+  }
+
+  // --- MOBILE TOUCH CONTROL HOOKS ---
+  public setTouchMove(x: number, z: number) {
+    this.touchMoveX = x;
+    this.touchMoveZ = z;
+  }
+
+  public setTouchAim(angle: number | null) {
+    this.touchAimAngle = angle;
+  }
+
+  public setTouchShooting(active: boolean) {
+    this.isTouchShooting = active;
+  }
+
+  public triggerDashAction() {
+    if (this.state === 'PLAYING') {
+      this.triggerDash();
+    }
+  }
+
+  public triggerNovaAction() {
+    if (this.state === 'PLAYING') {
+      this.triggerNova();
+    }
   }
 
   public startGame() {
@@ -856,16 +888,16 @@ export class GameEngine {
   }
 
   private updatePlayer(dt: number) {
-    // Movement input vector
-    let moveX = 0;
-    let moveZ = 0;
+    // Movement input vector (combining keyboard and mobile touch joystick)
+    let moveX = this.touchMoveX;
+    let moveZ = this.touchMoveZ;
     if (this.keysHeld['KeyW'] || this.keysHeld['ArrowUp']) moveZ -= 1;
     if (this.keysHeld['KeyS'] || this.keysHeld['ArrowDown']) moveZ += 1;
     if (this.keysHeld['KeyA'] || this.keysHeld['ArrowLeft']) moveX -= 1;
     if (this.keysHeld['KeyD'] || this.keysHeld['ArrowRight']) moveX += 1;
 
     const inputLen = Math.hypot(moveX, moveZ);
-    if (inputLen > 0) {
+    if (inputLen > 1) {
       moveX /= inputLen;
       moveZ /= inputLen;
     }
@@ -901,10 +933,47 @@ export class GameEngine {
       this.player.z = (this.player.z / playerDist) * arenaRadius;
     }
 
-    // Player facing rotation towards mouse ground target
-    const dx = this.renderer.groundTarget.x - this.player.x;
-    const dz = this.renderer.groundTarget.z - this.player.z;
-    const targetAngle = Math.atan2(dx, dz);
+    // Player facing rotation & targeting
+    let targetAngle = this.player.rotation;
+
+    if (this.touchAimAngle !== null) {
+      // Manual aim via drag
+      targetAngle = this.touchAimAngle;
+      this.renderer.groundTarget.x = this.player.x + Math.sin(targetAngle) * 14;
+      this.renderer.groundTarget.z = this.player.z + Math.cos(targetAngle) * 14;
+    } else if (this.isTouchShooting) {
+      // Mobile Smart Auto-Aim: target nearest hostile enemy or boss
+      let nearestDist = 30;
+      let targetEnemy: EnemyInstance | null = null;
+      for (const en of this.enemies) {
+        const d = Math.hypot(en.x - this.player.x, en.z - this.player.z);
+        if (d < nearestDist) {
+          nearestDist = d;
+          targetEnemy = en;
+        }
+      }
+
+      if (targetEnemy) {
+        const dx = targetEnemy.x - this.player.x;
+        const dz = targetEnemy.z - this.player.z;
+        targetAngle = Math.atan2(dx, dz);
+        this.renderer.groundTarget.x = targetEnemy.x;
+        this.renderer.groundTarget.z = targetEnemy.z;
+      } else if (inputLen > 0.1) {
+        // Face movement direction if no enemies in immediate sight
+        targetAngle = Math.atan2(moveX, moveZ);
+        this.renderer.groundTarget.x = this.player.x + moveX * 14;
+        this.renderer.groundTarget.z = this.player.z + moveZ * 14;
+      }
+    } else {
+      // Mouse ground target
+      const dx = this.renderer.groundTarget.x - this.player.x;
+      const dz = this.renderer.groundTarget.z - this.player.z;
+      if (Math.hypot(dx, dz) > 0.1) {
+        targetAngle = Math.atan2(dx, dz);
+      }
+    }
+
     this.player.rotation = THREE.MathUtils.damp(this.player.rotation, targetAngle, 16, dt);
 
     // Banking roll into turns
@@ -927,9 +996,10 @@ export class GameEngine {
     if (this.shootTimer > 0) {
       this.shootTimer -= dt;
     }
-    if ((this.isMouseDown || this.keysHeld['Space']) && this.shootTimer <= 0) {
+    if ((this.isMouseDown || this.keysHeld['Space'] || this.isTouchShooting) && this.shootTimer <= 0) {
       this.shootPlayerWeapon();
     }
+
 
     // Passive Shield Regen (if not damaged in last 3s)
     if (this.player.stats.shield < this.player.stats.maxShield) {

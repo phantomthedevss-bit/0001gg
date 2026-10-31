@@ -39,8 +39,8 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   }
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/90 select-none">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700 p-6 md:p-8 space-y-6 shadow-2xl relative">
+    <div className="absolute inset-0 z-30 flex items-center justify-center p-3 md:p-4 bg-slate-950/90 select-none">
+      <div className="w-full max-w-lg max-h-[94vh] overflow-y-auto bg-slate-900 border border-slate-700 p-5 md:p-8 space-y-4 md:space-y-6 shadow-2xl relative">
         {/* Status Header */}
         <div className="text-center space-y-1">
           <div className="inline-block px-3 py-0.5 text-[10px] font-code tracking-widest uppercase border mb-1">
