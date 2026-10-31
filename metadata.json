@@ -1,0 +1,6 @@
+{
+  "name": "CYBERPULSE: OMEGA PROTOCOL",
+  "description": "High-octane 3D cyberpunk mech combat arena with telegraphed attacks, fluid dashing, procedural synth audio, and visceral boss encounters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
